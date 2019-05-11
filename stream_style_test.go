@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	StyleStreamTestsShouldMakeRealFiles = false
+	StyleStreamTestsShouldMakeRealFiles = true
 )
 
 type StreamStyleSuite struct{}
@@ -37,229 +37,240 @@ func (s *StreamStyleSuite) TestXlsxStreamWriteWithStyle(t *C) {
 		expectedError error
 	}{
 		{
-			testName: "Style Test",
+			testName: "Hyperlink test",
 			sheetNames: []string{
 				"Sheet1",
 			},
 			workbookData: [][][]StreamCell{
 				{
-					{NewStyledStringStreamCell("1", StreamStyleUnderlinedString), NewStyledStringStreamCell("25", StreamStyleItalicString),
-						NewStyledStringStreamCell("A", StreamStyleBoldString), NewStringStreamCell("B")},
-					{NewIntegerStreamCell(1234), NewStyledIntegerStreamCell(98, StreamStyleBoldInteger),
-						NewStyledIntegerStreamCell(34, StreamStyleItalicInteger), NewStyledIntegerStreamCell(26, StreamStyleUnderlinedInteger)},
+					{NewHyperlinkStreamCell("https://www.google.be", "", "")},
 				},
 			},
 		},
-		{
-			testName: "One Sheet",
-			sheetNames: []string{
-				"Sheet1",
-			},
-			workbookData: [][][]StreamCell{
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
-					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
-						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
-				},
-			},
-		},
-		{
-			testName: "One Column",
-			sheetNames: []string{
-				"Sheet1",
-			},
-			workbookData: [][][]StreamCell{
-				{
-					{NewStringStreamCell("Token")},
-					{NewIntegerStreamCell(123)},
-				},
-			},
-		},
-		{
-			testName: "Several Sheets, with different numbers of columns and rows",
-			sheetNames: []string{
-				"Sheet 1", "Sheet 2", "Sheet3",
-			},
-			workbookData: [][][]StreamCell{
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
-
-					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
-						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
-				},
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU"),
-						NewStringStreamCell("Stock")},
-
-					{NewIntegerStreamCell(456), NewStringStreamCell("Salsa"),
-						NewIntegerStreamCell(200), NewIntegerStreamCell(346),
-						NewIntegerStreamCell(1)},
-
-					{NewIntegerStreamCell(789), NewStringStreamCell("Burritos"),
-						NewIntegerStreamCell(400), NewIntegerStreamCell(754),
-						NewIntegerStreamCell(3)},
-				},
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price")},
-
-					{NewIntegerStreamCell(9853), NewStringStreamCell("Guacamole"),
-						NewIntegerStreamCell(500)},
-
-					{NewIntegerStreamCell(2357), NewStringStreamCell("Margarita"),
-						NewIntegerStreamCell(700)},
-				},
-			},
-		},
-		{
-			testName: "Two Sheets with same the name",
-			sheetNames: []string{
-				"Sheet 1", "Sheet 1",
-			},
-			workbookData: [][][]StreamCell{
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
-
-					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
-						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
-				},
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU"),
-						NewStringStreamCell("Stock")},
-
-					{NewIntegerStreamCell(456), NewStringStreamCell("Salsa"),
-						NewIntegerStreamCell(200), NewIntegerStreamCell(346),
-						NewIntegerStreamCell(1)},
-
-					{NewIntegerStreamCell(789), NewStringStreamCell("Burritos"),
-						NewIntegerStreamCell(400), NewIntegerStreamCell(754),
-						NewIntegerStreamCell(3)},
-				},
-			},
-			expectedError: fmt.Errorf("duplicate sheet name '%s'.", "Sheet 1"),
-		},
-		{
-			testName: "One Sheet Registered, tries to write to two",
-			sheetNames: []string{
-				"Sheet 1",
-			},
-			workbookData: [][][]StreamCell{
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
-
-					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
-						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
-				},
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
-
-					{NewIntegerStreamCell(456), NewStringStreamCell("Salsa"),
-						NewIntegerStreamCell(200), NewIntegerStreamCell(346)},
-				},
-			},
-			expectedError: AlreadyOnLastSheetError,
-		},
-		{
-			testName: "One Sheet, too many columns in row 1",
-			sheetNames: []string{
-				"Sheet 1",
-			},
-			workbookData: [][][]StreamCell{
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
-
-					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
-						NewIntegerStreamCell(300), NewIntegerStreamCell(123),
-						NewStringStreamCell("asdf")},
-				},
-			},
-			expectedError: WrongNumberOfRowsError,
-		},
-		{
-			testName: "One Sheet, too few columns in row 1",
-			sheetNames: []string{
-				"Sheet 1",
-			},
-			workbookData: [][][]StreamCell{
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
-
-					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
-						NewIntegerStreamCell(300)},
-				},
-			},
-			expectedError: WrongNumberOfRowsError,
-		},
-		{
-			testName: "Lots of Sheets, only writes rows to one, only writes headers to one, should not error and should still create a valid file",
-			sheetNames: []string{
-				"Sheet 1", "Sheet 2", "Sheet 3", "Sheet 4", "Sheet 5", "Sheet 6",
-			},
-			workbookData: [][][]StreamCell{
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
-
-					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
-						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
-				},
-				{{}},
-				{{NewStringStreamCell("Id"), NewStringStreamCell("Unit Cost")}},
-				{{}},
-				{{}},
-				{{}},
-			},
-		},
-		{
-			testName: "Two Sheets, only writes to one, should not error and should still create a valid file",
-			sheetNames: []string{
-				"Sheet 1", "Sheet 2",
-			},
-			workbookData: [][][]StreamCell{
-				{
-					{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
-						NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
-
-					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
-						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
-				},
-				{{}},
-			},
-		},
-		{
-			testName: "UTF-8 Characters. This XLSX File loads correctly with Excel, Numbers, and Google Docs. It also passes Microsoft's Office File Format Validator.",
-			sheetNames: []string{
-				"Sheet1",
-			},
-			workbookData: [][][]StreamCell{
-				{
-					// String courtesy of https://github.com/minimaxir/big-list-of-naughty-strings/
-					// Header row contains the tags that I am filtering on
-					{NewStringStreamCell("Token"), NewStringStreamCell(endSheetDataTag),
-						NewStringStreamCell("Price"), NewStringStreamCell(fmt.Sprintf(dimensionTag, "A1:D1"))},
-					// Japanese and emojis
-					{NewIntegerStreamCell(123), NewStringStreamCell("パーティーへ行かないか"),
-						NewIntegerStreamCell(300), NewStringStreamCell("🍕🐵 🙈 🙉 🙊")},
-					// XML encoder/parser test strings
-					{NewIntegerStreamCell(123), NewStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?>`),
-						NewIntegerStreamCell(300), NewStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>`)},
-					// Upside down text and Right to Left Arabic text
-					{NewIntegerStreamCell(123), NewStringStreamCell(`˙ɐnbᴉlɐ ɐuƃɐɯ ǝɹolop ʇǝ ǝɹoqɐl ʇn ʇunpᴉpᴉɔuᴉ ɹodɯǝʇ poɯsnᴉǝ op pǝs 'ʇᴉlǝ ƃuᴉɔsᴉdᴉpɐ ɹnʇǝʇɔǝsuoɔ 'ʇǝɯɐ ʇᴉs ɹolop ɯnsdᴉ ɯǝɹo˥
-					00˙Ɩ$-`), NewIntegerStreamCell(300), NewStringStreamCell(`ﷺ`)},
-					{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
-						NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
-				},
-			},
-		},
+		//{
+		//	testName: "Style Test",
+		//	sheetNames: []string{
+		//		"Sheet1",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			{NewStyledStringStreamCell("1", StreamStyleUnderlinedString), NewStyledStringStreamCell("25", StreamStyleItalicString),
+		//				NewStyledStringStreamCell("A", StreamStyleBoldString), NewStringStreamCell("B")},
+		//			{NewIntegerStreamCell(1234), NewStyledIntegerStreamCell(98, StreamStyleBoldInteger),
+		//				NewStyledIntegerStreamCell(34, StreamStyleItalicInteger), NewStyledIntegerStreamCell(26, StreamStyleUnderlinedInteger)},
+		//		},
+		//	},
+		//},
+		//{
+		//	testName: "One Sheet",
+		//	sheetNames: []string{
+		//		"Sheet1",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
+		//			{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+		//				NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
+		//		},
+		//	},
+		//},
+		//{
+		//	testName: "One Column",
+		//	sheetNames: []string{
+		//		"Sheet1",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			{NewStringStreamCell("Token")},
+		//			{NewIntegerStreamCell(123)},
+		//		},
+		//	},
+		//},
+		//{
+		//	testName: "Several Sheets, with different numbers of columns and rows",
+		//	sheetNames: []string{
+		//		"Sheet 1", "Sheet 2", "Sheet3",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
+		//
+		//			{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+		//				NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
+		//		},
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU"),
+		//				NewStringStreamCell("Stock")},
+		//
+		//			{NewIntegerStreamCell(456), NewStringStreamCell("Salsa"),
+		//				NewIntegerStreamCell(200), NewIntegerStreamCell(346),
+		//				NewIntegerStreamCell(1)},
+		//
+		//			{NewIntegerStreamCell(789), NewStringStreamCell("Burritos"),
+		//				NewIntegerStreamCell(400), NewIntegerStreamCell(754),
+		//				NewIntegerStreamCell(3)},
+		//		},
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price")},
+		//
+		//			{NewIntegerStreamCell(9853), NewStringStreamCell("Guacamole"),
+		//				NewIntegerStreamCell(500)},
+		//
+		//			{NewIntegerStreamCell(2357), NewStringStreamCell("Margarita"),
+		//				NewIntegerStreamCell(700)},
+		//		},
+		//	},
+		//},
+		//{
+		//	testName: "Two Sheets with same the name",
+		//	sheetNames: []string{
+		//		"Sheet 1", "Sheet 1",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
+		//
+		//			{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+		//				NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
+		//		},
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU"),
+		//				NewStringStreamCell("Stock")},
+		//
+		//			{NewIntegerStreamCell(456), NewStringStreamCell("Salsa"),
+		//				NewIntegerStreamCell(200), NewIntegerStreamCell(346),
+		//				NewIntegerStreamCell(1)},
+		//
+		//			{NewIntegerStreamCell(789), NewStringStreamCell("Burritos"),
+		//				NewIntegerStreamCell(400), NewIntegerStreamCell(754),
+		//				NewIntegerStreamCell(3)},
+		//		},
+		//	},
+		//	expectedError: fmt.Errorf("duplicate sheet name '%s'.", "Sheet 1"),
+		//},
+		//{
+		//	testName: "One Sheet Registered, tries to write to two",
+		//	sheetNames: []string{
+		//		"Sheet 1",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
+		//
+		//			{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+		//				NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
+		//		},
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
+		//
+		//			{NewIntegerStreamCell(456), NewStringStreamCell("Salsa"),
+		//				NewIntegerStreamCell(200), NewIntegerStreamCell(346)},
+		//		},
+		//	},
+		//	expectedError: AlreadyOnLastSheetError,
+		//},
+		//{
+		//	testName: "One Sheet, too many columns in row 1",
+		//	sheetNames: []string{
+		//		"Sheet 1",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
+		//
+		//			{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+		//				NewIntegerStreamCell(300), NewIntegerStreamCell(123),
+		//				NewStringStreamCell("asdf")},
+		//		},
+		//	},
+		//	expectedError: WrongNumberOfRowsError,
+		//},
+		//{
+		//	testName: "One Sheet, too few columns in row 1",
+		//	sheetNames: []string{
+		//		"Sheet 1",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
+		//
+		//			{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+		//				NewIntegerStreamCell(300)},
+		//		},
+		//	},
+		//	expectedError: WrongNumberOfRowsError,
+		//},
+		//{
+		//	testName: "Lots of Sheets, only writes rows to one, only writes headers to one, should not error and should still create a valid file",
+		//	sheetNames: []string{
+		//		"Sheet 1", "Sheet 2", "Sheet 3", "Sheet 4", "Sheet 5", "Sheet 6",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
+		//
+		//			{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+		//				NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
+		//		},
+		//		{{}},
+		//		{{NewStringStreamCell("Id"), NewStringStreamCell("Unit Cost")}},
+		//		{{}},
+		//		{{}},
+		//		{{}},
+		//	},
+		//},
+		//{
+		//	testName: "Two Sheets, only writes to one, should not error and should still create a valid file",
+		//	sheetNames: []string{
+		//		"Sheet 1", "Sheet 2",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			{NewStringStreamCell("Token"), NewStringStreamCell("Name"),
+		//				NewStringStreamCell("Price"), NewStringStreamCell("SKU")},
+		//
+		//			{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+		//				NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
+		//		},
+		//		{{}},
+		//	},
+		//},
+		//{
+		//	testName: "UTF-8 Characters. This XLSX File loads correctly with Excel, Numbers, and Google Docs. It also passes Microsoft's Office File Format Validator.",
+		//	sheetNames: []string{
+		//		"Sheet1",
+		//	},
+		//	workbookData: [][][]StreamCell{
+		//		{
+		//			// String courtesy of https://github.com/minimaxir/big-list-of-naughty-strings/
+		//			// Header row contains the tags that I am filtering on
+		//			{NewStringStreamCell("Token"), NewStringStreamCell(endSheetDataTag),
+		//				NewStringStreamCell("Price"), NewStringStreamCell(fmt.Sprintf(dimensionTag, "A1:D1"))},
+		//			// Japanese and emojis
+		//			{NewIntegerStreamCell(123), NewStringStreamCell("パーティーへ行かないか"),
+		//				NewIntegerStreamCell(300), NewStringStreamCell("🍕🐵 🙈 🙉 🙊")},
+		//			// XML encoder/parser test strings
+		//			{NewIntegerStreamCell(123), NewStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?>`),
+		//				NewIntegerStreamCell(300), NewStringStreamCell(`<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>`)},
+		//			// Upside down text and Right to Left Arabic text
+		//			{NewIntegerStreamCell(123), NewStringStreamCell(`˙ɐnbᴉlɐ ɐuƃɐɯ ǝɹolop ʇǝ ǝɹoqɐl ʇn ʇunpᴉpᴉɔuᴉ ɹodɯǝʇ poɯsnᴉǝ op pǝs 'ʇᴉlǝ ƃuᴉɔsᴉdᴉpɐ ɹnʇǝʇɔǝsuoɔ 'ʇǝɯɐ ʇᴉs ɹolop ɯnsdᴉ ɯǝɹo˥
+		//			00˙Ɩ$-`), NewIntegerStreamCell(300), NewStringStreamCell(`ﷺ`)},
+		//			{NewIntegerStreamCell(123), NewStringStreamCell("Taco"),
+		//				NewIntegerStreamCell(300), NewIntegerStreamCell(123)},
+		//		},
+		//	},
+		//},
 	}
 
 	for i, testCase := range testCases {
@@ -331,7 +342,7 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 
 	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicString, StreamStyleUnderlinedString,
 		StreamStyleDefaultInteger, StreamStyleBoldInteger, StreamStyleItalicInteger, StreamStyleUnderlinedInteger,
-		StreamStyleDefaultDate}
+		StreamStyleDefaultDate, StreamStyleHyperlink}
 	allStylesToBeAdded := append(defaultStyles, customStyles...)
 	err = file.AddStreamStyleList(allStylesToBeAdded)
 	if err != nil {

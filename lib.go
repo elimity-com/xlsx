@@ -721,14 +721,24 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 	if worksheet.Hyperlinks != nil {
 
 		worksheetRelsFile := fi.worksheetRels["sheet"+rsheet.SheetId]
+		if worksheetRelsFile == nil {
+			err := errors.New("there are hyperlinks in the file but no relations file for these hyperlinks")
+			result.Error = err
+			sc <- result
+			return err
+		}
 		worksheetRels := new(xlsxWorksheetRels)
 		rc, err := worksheetRelsFile.Open()
 		if err != nil {
+			result.Error = err
+			sc <- result
 			return err
 		}
 		decoder := xml.NewDecoder(rc)
 		err = decoder.Decode(worksheetRels)
 		if err != nil {
+			result.Error = err
+			sc <- result
 			return err
 		}
 
@@ -744,7 +754,10 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 				}
 			}
 			if !relationPresent {
-				return errors.New("sheets relations file has no relations for the relation id present in the hyperlink")
+				err := errors.New("sheets relations file has no relations for the relation id present in the hyperlink")
+				result.Error = err
+				sc <- result
+				return err
 			}
 
 			if xlsxLink.Tooltip != "" {
@@ -756,6 +769,8 @@ func readSheetFromFile(sc chan *indexedSheet, index int, rsheet xlsxSheet, fi *F
 			cellRef := xlsxLink.Reference
 			x, y, err := GetCoordsFromCellIDString(cellRef)
 			if err != nil {
+				result.Error = err
+				sc <- result
 				return err
 			}
 			cell := sheet.Row(y).Cells[x]

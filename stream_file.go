@@ -27,8 +27,31 @@ type streamSheet struct {
 	// The number of columns in the sheet
 	columnCount int
 	// The writer to write to this sheet's file in the XLSX Zip file
-	writer   io.Writer
-	styleIds []int
+	writer           io.Writer
+	styleIds         []int
+	streamRelations  []streamRelation
+	streamHyperlinks []streamHyperlink
+}
+
+type streamHyperlink struct {
+	Hyperlink Hyperlink
+	cellID    string
+}
+
+type streamRelation struct {
+	Type       RelationshipType
+	Target     string
+	TargetMode RelationshipTargetMode
+}
+
+func (ss *streamSheet) addStreamRelation(relType RelationshipType, target string, targetMode RelationshipTargetMode) {
+	newRel := streamRelation{Type: relType, Target: target, TargetMode: targetMode}
+	for _, rel := range ss.streamRelations {
+		if rel == newRel {
+			return
+		}
+	}
+	ss.streamRelations = append(ss.streamRelations, newRel)
 }
 
 var (
@@ -201,6 +224,11 @@ func (sf *StreamFile) getXlsxCell(cell StreamCell, colIndex int) (xlsxC, error) 
 		}
 	}
 
+	if cell.hyperlink != (Hyperlink{}) {
+		sf.currentSheet.addStreamRelation(RelationshipTypeHyperlink, cell.hyperlink.Link, RelationshipTargetModeExternal)
+		sf.currentSheet.streamHyperlinks = append(sf.currentSheet.streamHyperlinks, streamHyperlink{cell.hyperlink, cellCoordinate})
+	}
+
 	return makeXlsxCell(cell.cellType, cellCoordinate, cellStyleId, cell.cellData)
 }
 
@@ -219,7 +247,7 @@ func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cel
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "b", V: cellData}, nil
 	// Dates are better represented using CellTyleNumeric and the date formatting
 	//case CellTypeDate:
-		//return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "d", V: cellData}, nil
+	//return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "d", V: cellData}, nil
 	case CellTypeError:
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "e", V: cellData}, nil
 	case CellTypeInline:
@@ -231,7 +259,7 @@ func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cel
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "inlineStr", Is: &xlsxSI{T: cellData}}, nil
 	// TODO currently not supported
 	// case CellTypeStringFormula:
-		// return xlsxC{}, UnsupportedCellTypeError
+	// return xlsxC{}, UnsupportedCellTypeError
 	default:
 		return xlsxC{}, UnsupportedCellTypeError
 	}
@@ -317,6 +345,67 @@ func (sf *StreamFile) Close() error {
 	return err
 }
 
+func (ss *streamSheet) makeXLSXSheetRelations() *xlsxWorksheetRels {
+	relSheet := xlsxWorksheetRels{XMLName: xml.Name{Local: "Relationships"}, Relationships: []xlsxWorksheetRelation{}}
+	for id, rel := range ss.streamRelations {
+		xRel := xlsxWorksheetRelation{Id: "rId" + strconv.Itoa(id+1), Type: rel.Type, Target: rel.Target, TargetMode: rel.TargetMode}
+		relSheet.Relationships = append(relSheet.Relationships, xRel)
+	}
+	if len(relSheet.Relationships) == 0 {
+		return nil
+	}
+	return &relSheet
+}
+
+func (ss *streamSheet) makeXLSXHyperlinks(relations *xlsxWorksheetRels) (*xlsxHyperlinks, error) {
+	links := xlsxHyperlinks{XMLName: xml.Name{Local: "hyperlinks"}, HyperLinks: []xlsxHyperlink{}}
+	for _, link := range ss.streamHyperlinks {
+		xLink := xlsxHyperlink{Reference: link.cellID}
+		rid, err := findRelationIDForHyperlink(relations, link.Hyperlink.Link)
+		if err != nil {
+			return nil, err
+		}
+		xLink.RelationshipId = rid
+		if link.Hyperlink.DisplayString != ""{
+			xLink.DisplayString = link.Hyperlink.DisplayString
+		}
+		if link.Hyperlink.Tooltip != ""{
+			xLink.Tooltip = link.Hyperlink.Tooltip
+		}
+		links.HyperLinks = append(links.HyperLinks, xLink)
+	}
+	return &links, nil
+}
+
+func findRelationIDForHyperlink(relations *xlsxWorksheetRels, hyperlink string) (string, error) {
+	for _, rel := range relations.Relationships {
+		if rel.Target == hyperlink {
+			return rel.Id, nil
+		}
+	}
+	return "", errors.New("no relation for given hyperlink")
+}
+
+func (ss *streamSheet) writeHyperlinks() error {
+	xlsxRels := ss.makeXLSXSheetRelations()
+	if xlsxRels == nil {
+		return nil
+	}
+	xlsxLinks, err := ss.makeXLSXHyperlinks(xlsxRels)
+	if err != nil {
+		return err
+	}
+	marshaledHyperlinks, err := xml.Marshal(xlsxLinks)
+	if err != nil {
+		return nil
+	}
+	// Write the cell
+	if _, err := ss.writer.Write(marshaledHyperlinks); err != nil {
+		return err
+	}
+	return nil
+}
+
 // writeSheetStart will write the start of the Sheet's XML
 func (sf *StreamFile) writeSheetStart() error {
 	if sf.currentSheet == nil {
@@ -333,6 +422,8 @@ func (sf *StreamFile) writeSheetEnd() error {
 	if err := sf.currentSheet.write(endSheetDataTag); err != nil {
 		return err
 	}
+	// TODO write hyperlinks to sheet
+	sf.currentSheet.writeHyperlinks()
 	return sf.currentSheet.write(sf.sheetXmlSuffix[sf.currentSheet.index-1])
 }
 

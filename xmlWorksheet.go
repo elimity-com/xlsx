@@ -334,6 +334,7 @@ type xlsxMergeCells struct {
 }
 
 type xlsxHyperlinks struct {
+	XMLName xml.Name
 	HyperLinks []xlsxHyperlink `xml:"hyperlink"`
 }
 

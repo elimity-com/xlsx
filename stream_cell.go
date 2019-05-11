@@ -26,6 +26,9 @@ func NewStreamCell(cellData string, cellStyle StreamStyle, cellType CellType) St
 // DisplayData and tooltip are not necessary. If an empty string is passed then they won't be set.
 // You need to pas a valid URL starting with "http://" or "https://" for excel to recognize it
 // as an external link.
+// ! Important Note: Streaming Hyperlinks is impossible without breaking the rule of never building up memory.
+// ! The structure of xlsx files requires writing data in 3 different places in 2 files and this requires using memory.
+// ! Keep this in mind if you want to stream Hyperlinks.
 func NewHyperlinkStreamCell(hyperlink string, displayData string, tooltip string) StreamCell {
 	return NewStyledHyperlinkStreamCell(hyperlink, displayData, tooltip, StreamStyleHyperlink)
 }
@@ -35,8 +38,11 @@ func NewHyperlinkStreamCell(hyperlink string, displayData string, tooltip string
 // DisplayData and tooltip are not necessary. If an empty string is passed then they won't be set.
 // You need to pas a valid URL starting with "http://" or "https://" for excel to recognize it
 // as an external link.
+// ! Important Note: Streaming Hyperlinks is impossible without breaking the rule of never building up memory.
+// ! The structure of xlsx files requires writing data in 3 different places in 2 files and this requires using memory.
+// ! Keep this in mind if you want to stream Hyperlinks.
 func NewStyledHyperlinkStreamCell(hyperlink string, displayData string, tooltip string, style StreamStyle) StreamCell {
-	link := Hyperlink{Link:hyperlink}
+	link := Hyperlink{Link: hyperlink}
 	cellData := hyperlink
 	if displayData != "" {
 		link.DisplayString = displayData
@@ -49,6 +55,7 @@ func NewStyledHyperlinkStreamCell(hyperlink string, displayData string, tooltip 
 		cellData:  cellData,
 		cellStyle: style,
 		cellType:  CellTypeString,
+		hyperlink: link,
 	}
 }
 
