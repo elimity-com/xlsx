@@ -19,6 +19,8 @@ const (
 	RGB_Dark_Red    = "FF9C0006"
 	RGB_White       = "00000000"
 	RGB_Black       = "FFFFFFFF"
+	// TODO check this colour
+	RGB_LINK_BLUE   = "0563C1"
 )
 
 const (

@@ -31,11 +31,14 @@ var (
 	StreamStyleDefaultDate StreamStyle
 
 	StreamStyleDefaultDecimal StreamStyle
+
+	StreamStyleHyperlink StreamStyle
 )
 var (
 	FontBold       *Font
 	FontItalic     *Font
 	FontUnderlined *Font
+	FontHyperlink  *Font
 )
 var (
 	FillGreen *Fill
@@ -53,6 +56,10 @@ func init() {
 
 	FontUnderlined = DefaultFont()
 	FontUnderlined.Underline = true
+
+	FontHyperlink = DefaultFont()
+	FontHyperlink.Color = RGB_LINK_BLUE
+	FontHyperlink.Underline = true
 
 	// Init Fills
 	FillGreen = NewFill(Solid_Cell_Fill, RGB_Light_Green, RGB_White)
@@ -74,6 +81,8 @@ func init() {
 	StreamStyleDefaultDate = MakeDateStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
 
 	StreamStyleDefaultDecimal = MakeDecimalStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
+
+	StreamStyleHyperlink = MakeStyle(GeneralFormat, FontHyperlink, DefaultFill(), DefaultAlignment(), DefaultBorder())
 }
 
 // MakeStyle creates a new StreamStyle and add it to the styles that will be streamed.

@@ -10,6 +10,7 @@ type StreamCell struct {
 	cellData  string
 	cellStyle StreamStyle
 	cellType  CellType
+	hyperlink Hyperlink
 }
 
 // NewStreamCell creates a new cell containing the given data with the given style and type.
@@ -18,6 +19,36 @@ func NewStreamCell(cellData string, cellStyle StreamStyle, cellType CellType) St
 		cellData:  cellData,
 		cellStyle: cellStyle,
 		cellType:  cellType,
+	}
+}
+
+// NewHyperlinkStreamCell creates a new cell containing the given hyperlink, displayData and tooltip.
+// DisplayData and tooltip are not necessary. If an empty string is passed then they won't be set.
+// You need to pas a valid URL starting with "http://" or "https://" for excel to recognize it
+// as an external link.
+func NewHyperlinkStreamCell(hyperlink string, displayData string, tooltip string) StreamCell {
+	return NewStyledHyperlinkStreamCell(hyperlink, displayData, tooltip, StreamStyleHyperlink)
+}
+
+// NewStyledHyperlinkStreamCell creates a new cell containing the given hyperlink, displayData and tooltip.
+// The cell will also have the specified style.
+// DisplayData and tooltip are not necessary. If an empty string is passed then they won't be set.
+// You need to pas a valid URL starting with "http://" or "https://" for excel to recognize it
+// as an external link.
+func NewStyledHyperlinkStreamCell(hyperlink string, displayData string, tooltip string, style StreamStyle) StreamCell {
+	link := Hyperlink{Link:hyperlink}
+	cellData := hyperlink
+	if displayData != "" {
+		link.DisplayString = displayData
+		cellData = displayData
+	}
+	if tooltip != "" {
+		link.Tooltip = tooltip
+	}
+	return StreamCell{
+		cellData:  cellData,
+		cellStyle: style,
+		cellType:  CellTypeString,
 	}
 }
 
