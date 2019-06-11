@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"strconv"
+	"strings"
 )
 
 type StreamFile struct {
@@ -27,10 +28,10 @@ type streamSheet struct {
 	// The number of columns in the sheet
 	columnCount int
 	// The writer to write to this sheet's file in the XLSX Zip file
-	writer           io.Writer
-	styleIds         []int
-	streamRelations  []streamRelation
-	streamHyperlinks []streamHyperlink
+	writer               io.Writer
+	styleIds             []int
+	HyperlinkRelationMap map[string]int
+	streamHyperlinks     []streamHyperlink
 }
 
 type streamHyperlink struct {
@@ -38,20 +39,19 @@ type streamHyperlink struct {
 	cellID    string
 }
 
-type streamRelation struct {
-	Type       RelationshipType
-	Target     string
-	TargetMode RelationshipTargetMode
-}
+//type streamRelation struct {
+//	Type       RelationshipType
+//	Target     string
+//	TargetMode RelationshipTargetMode
+//}
 
-func (ss *streamSheet) addStreamRelation(relType RelationshipType, target string, targetMode RelationshipTargetMode) {
-	newRel := streamRelation{Type: relType, Target: target, TargetMode: targetMode}
-	for _, rel := range ss.streamRelations {
-		if rel == newRel {
-			return
-		}
+func (ss *streamSheet) addStreamHyperlinkRelation(target string) {
+	if ss.HyperlinkRelationMap == nil {
+		ss.HyperlinkRelationMap = make(map[string]int)
 	}
-	ss.streamRelations = append(ss.streamRelations, newRel)
+	if _, ok := ss.HyperlinkRelationMap[target]; !ok {
+		ss.HyperlinkRelationMap[target] = len(ss.HyperlinkRelationMap) + 1
+	}
 }
 
 var (
@@ -225,7 +225,7 @@ func (sf *StreamFile) getXlsxCell(cell StreamCell, colIndex int) (xlsxC, error) 
 	}
 
 	if cell.hyperlink != (Hyperlink{}) {
-		sf.currentSheet.addStreamRelation(RelationshipTypeHyperlink, cell.hyperlink.Link, RelationshipTargetModeExternal)
+		sf.currentSheet.addStreamHyperlinkRelation(cell.hyperlink.Link)
 		sf.currentSheet.streamHyperlinks = append(sf.currentSheet.streamHyperlinks, streamHyperlink{cell.hyperlink, cellCoordinate})
 	}
 
@@ -288,13 +288,21 @@ func (sf *StreamFile) NextSheet() error {
 			sf.err = AlreadyOnLastSheetError
 			return AlreadyOnLastSheetError
 		}
-		if err := sf.writeSheetEnd(); err != nil {
+		xlsxRels, err := sf.writeSheetEnd()
+		if err != nil {
 			sf.currentSheet = nil
 			sf.err = err
 			return err
 		}
 		sheetIndex = sf.currentSheet.index
+
+		// TODO write relations file
+		err = sf.writeCurrentSheetRelations(xlsxRels)
+		if err != nil {
+			return err
+		}
 	}
+
 	sheetIndex++
 	sf.currentSheet = &streamSheet{
 		index:       sheetIndex,
@@ -317,6 +325,35 @@ func (sf *StreamFile) NextSheet() error {
 	return nil
 }
 
+func (sf *StreamFile) writeCurrentSheetRelations(xlsxRels *xlsxWorksheetRels) error {
+	// TODO marshall relations file
+	marshalledRels, err := xml.Marshal(xlsxRels)
+	if err != nil {
+		sf.err = err
+		return err
+	}
+	// TODO create writer
+	sheetPath := "xl/worksheets/_rels/sheet" + strconv.Itoa(sf.currentSheet.index) + sheetFilePathSuffix + ".rels"
+	fileWriter, err := sf.zipWriter.Create(sheetPath)
+	if err != nil {
+		sf.err = err
+		return err
+	}
+
+	// TODO write begin of file
+	if _, err := fileWriter.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>`)); err != nil {
+		sf.err = err
+		return err
+	}
+
+	// TODO write relations data
+	if _, err := fileWriter.Write(marshalledRels); err != nil {
+		sf.err = err
+		return err
+	}
+	return nil
+}
+
 // Close closes the Stream File.
 // Any sheets that have not yet been written to will have an empty sheet created for them.
 func (sf *StreamFile) Close() error {
@@ -333,8 +370,15 @@ func (sf *StreamFile) Close() error {
 			}
 		}
 		// Write the end of the last sheet.
-		if err := sf.writeSheetEnd(); err != nil {
+		xlsxRels, err := sf.writeSheetEnd()
+		if err != nil {
 			sf.err = err
+			return err
+		}
+
+		// TODO write relations file
+		err = sf.writeCurrentSheetRelations(xlsxRels)
+		if err != nil {
 			return err
 		}
 	}
@@ -347,29 +391,30 @@ func (sf *StreamFile) Close() error {
 
 func (ss *streamSheet) makeXLSXSheetRelations() *xlsxWorksheetRels {
 	relSheet := xlsxWorksheetRels{XMLName: xml.Name{Local: "Relationships"}, Relationships: []xlsxWorksheetRelation{}}
-	for id, rel := range ss.streamRelations {
-		xRel := xlsxWorksheetRelation{Id: "rId" + strconv.Itoa(id+1), Type: rel.Type, Target: rel.Target, TargetMode: rel.TargetMode}
+
+	reversedMap := reverseMap(ss.HyperlinkRelationMap)
+
+	for id, link := range reversedMap {
+		xRel := xlsxWorksheetRelation{Id: "rId" + strconv.Itoa(id), Type: RelationshipTypeHyperlink, Target: link, TargetMode: RelationshipTargetModeExternal}
 		relSheet.Relationships = append(relSheet.Relationships, xRel)
 	}
+
 	if len(relSheet.Relationships) == 0 {
 		return nil
 	}
 	return &relSheet
 }
 
-func (ss *streamSheet) makeXLSXHyperlinks(relations *xlsxWorksheetRels) (*xlsxHyperlinks, error) {
+func (ss *streamSheet) makeXLSXHyperlinks() (*xlsxHyperlinks, error) {
 	links := xlsxHyperlinks{XMLName: xml.Name{Local: "hyperlinks"}, HyperLinks: []xlsxHyperlink{}}
 	for _, link := range ss.streamHyperlinks {
 		xLink := xlsxHyperlink{Reference: link.cellID}
-		rid, err := findRelationIDForHyperlink(relations, link.Hyperlink.Link)
-		if err != nil {
-			return nil, err
-		}
+		rid := `rId` + strconv.Itoa(ss.HyperlinkRelationMap[link.Hyperlink.Link])
 		xLink.RelationshipId = rid
-		if link.Hyperlink.DisplayString != ""{
+		if link.Hyperlink.DisplayString != "" {
 			xLink.DisplayString = link.Hyperlink.DisplayString
 		}
-		if link.Hyperlink.Tooltip != ""{
+		if link.Hyperlink.Tooltip != "" {
 			xLink.Tooltip = link.Hyperlink.Tooltip
 		}
 		links.HyperLinks = append(links.HyperLinks, xLink)
@@ -377,21 +422,8 @@ func (ss *streamSheet) makeXLSXHyperlinks(relations *xlsxWorksheetRels) (*xlsxHy
 	return &links, nil
 }
 
-func findRelationIDForHyperlink(relations *xlsxWorksheetRels, hyperlink string) (string, error) {
-	for _, rel := range relations.Relationships {
-		if rel.Target == hyperlink {
-			return rel.Id, nil
-		}
-	}
-	return "", errors.New("no relation for given hyperlink")
-}
-
 func (ss *streamSheet) writeHyperlinks() error {
-	xlsxRels := ss.makeXLSXSheetRelations()
-	if xlsxRels == nil {
-		return nil
-	}
-	xlsxLinks, err := ss.makeXLSXHyperlinks(xlsxRels)
+	xlsxLinks, err := ss.makeXLSXHyperlinks()
 	if err != nil {
 		return err
 	}
@@ -399,8 +431,12 @@ func (ss *streamSheet) writeHyperlinks() error {
 	if err != nil {
 		return nil
 	}
+	// Add relationship namespace:
+	oldHyperlink := `<hyperlink id=`
+	newHyperlink := `<hyperlink r:id=`
+	newMarshaledHyperlinks := strings.Replace(string(marshaledHyperlinks), oldHyperlink, newHyperlink, -1)
 	// Write the cell
-	if _, err := ss.writer.Write(marshaledHyperlinks); err != nil {
+	if _, err := ss.writer.Write([]byte(newMarshaledHyperlinks)); err != nil {
 		return err
 	}
 	return nil
@@ -415,19 +451,35 @@ func (sf *StreamFile) writeSheetStart() error {
 }
 
 // writeSheetEnd will write the end of the Sheet's XML
-func (sf *StreamFile) writeSheetEnd() error {
+func (sf *StreamFile) writeSheetEnd() (*xlsxWorksheetRels, error) {
 	if sf.currentSheet == nil {
-		return NoCurrentSheetError
+		return &xlsxWorksheetRels{}, NoCurrentSheetError
 	}
 	if err := sf.currentSheet.write(endSheetDataTag); err != nil {
-		return err
+		return &xlsxWorksheetRels{}, err
 	}
-	// TODO write hyperlinks to sheet
-	sf.currentSheet.writeHyperlinks()
-	return sf.currentSheet.write(sf.sheetXmlSuffix[sf.currentSheet.index-1])
+	// TODO create relations file
+	xlsxRels := sf.currentSheet.makeXLSXSheetRelations()
+	if xlsxRels != nil {
+		// TODO write hyperlinks to sheet
+		err := sf.currentSheet.writeHyperlinks()
+		if err != nil {
+			sf.err = err
+			return &xlsxWorksheetRels{}, err
+		}
+	}
+	return xlsxRels, sf.currentSheet.write(sf.sheetXmlSuffix[sf.currentSheet.index-1])
 }
 
 func (ss *streamSheet) write(data string) error {
 	_, err := ss.writer.Write([]byte(data))
 	return err
+}
+
+func reverseMap(m map[string]int) map[int]string {
+	n := make(map[int]string)
+	for k, v := range m {
+		n[v] = k
+	}
+	return n
 }

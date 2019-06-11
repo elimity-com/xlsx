@@ -54,10 +54,11 @@ type StreamFileBuilder struct {
 }
 
 const (
-	sheetFilePathPrefix = "xl/worksheets/sheet"
-	sheetFilePathSuffix = ".xml"
-	endSheetDataTag     = "</sheetData>"
-	dimensionTag        = `<dimension ref="%s"></dimension>`
+	sheetFilePathPrefix     = "xl/worksheets/sheet"
+	sheetFilePathSuffix     = ".xml"
+	sheetRelsFIlePathPrefix = "xl/worksheets/_rels/sheet"
+	endSheetDataTag         = "</sheetData>"
+	dimensionTag            = `<dimension ref="%s"></dimension>`
 	// This is the index of the max style that this library will insert into XLSX sheets by default.
 	// This allows us to predict what the style id of styles that we add will be.
 	// TestXlsxStyleBehavior tests that this behavior continues to be what we expect.
@@ -148,6 +149,9 @@ func (sb *StreamFileBuilder) AddSheetS(name string, columnStyles []StreamStyle) 
 		sb.built = true
 		return err
 	}
+
+	sheet.Relations = []Relation{}
+
 	// To make sure no new styles can be added after adding a sheet
 	sb.firstSheetAdded = true
 
@@ -201,12 +205,12 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	}
 
 	es := &StreamFile{
-		zipWriter:      sb.zipWriter,
-		xlsxFile:       sb.xlsxFile,
-		sheetXmlPrefix: make([]string, len(sb.xlsxFile.Sheets)),
-		sheetXmlSuffix: make([]string, len(sb.xlsxFile.Sheets)),
-		styleIds:       sb.styleIds,
-		styleIdMap:     sb.styleIdMap,
+		zipWriter:          sb.zipWriter,
+		xlsxFile:           sb.xlsxFile,
+		sheetXmlPrefix:     make([]string, len(sb.xlsxFile.Sheets)),
+		sheetXmlSuffix:     make([]string, len(sb.xlsxFile.Sheets)),
+		styleIds:           sb.styleIds,
+		styleIdMap:         sb.styleIdMap,
 	}
 	for path, data := range parts {
 		// If the part is a sheet, don't write it yet. We only want to write the XLSX metadata files, since at this
@@ -217,6 +221,12 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 			}
 			continue
 		}
+
+		// If the part is a sheet relations file, dont't write it yet.
+		if strings.HasPrefix(path, sheetRelsFIlePathPrefix) {
+			continue
+		}
+
 		metadataFile, err := sb.zipWriter.Create(path)
 		if err != nil {
 			return nil, err

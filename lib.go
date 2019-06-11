@@ -1143,7 +1143,7 @@ func ReadZipReaderWithRowLimit(r *zip.Reader, rowLimit int) (*File, error) {
 		file.styles = style
 	}
 	sheetsByName, sheets, err = readSheetsFromZipFile(workbook, file, sheetXMLMap, rowLimit)
-	//sheetRelsByName, sheetRels, err = readSheetRelationsFromZipFile()
+	// sheetRelsByName, sheetRels, err = readSheetRelationsFromZipFile()
 	if err != nil {
 		return nil, err
 	}
