@@ -39,11 +39,6 @@ type streamHyperlink struct {
 	cellID    string
 }
 
-//type streamRelation struct {
-//	Type       RelationshipType
-//	Target     string
-//	TargetMode RelationshipTargetMode
-//}
 
 func (ss *streamSheet) addStreamHyperlinkRelation(target string) {
 	if ss.HyperlinkRelationMap == nil {
