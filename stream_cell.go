@@ -5,6 +5,9 @@ import (
 	"time"
 )
 
+// Use this if you want to have an empty cell in your row
+var EmptyStreamCell = StreamCell{}
+
 // StreamCell holds the data, style and type of cell for streaming.
 type StreamCell struct {
 	cellData  string

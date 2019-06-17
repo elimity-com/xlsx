@@ -181,6 +181,9 @@ func (sf *StreamFile) writeS(cells []StreamCell) error {
 	// Add cells one by one
 	for colIndex, cell := range cells {
 
+		// Don't write an empty cell
+		if cell == EmptyStreamCell{continue}
+
 		xlsxCell, err := sf.getXlsxCell(cell, colIndex)
 		if err != nil {
 			return err

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	StyleStreamTestsShouldMakeRealFiles = false
+	StyleStreamTestsShouldMakeRealFiles = true
 )
 
 type StreamStyleSuite struct{}
@@ -38,6 +38,20 @@ func (s *StreamStyleSuite) TestXlsxStreamWriteWithStyle(t *C) {
 		workbookData  [][][]StreamCell
 		expectedError error
 	}{
+		{
+			testName: "Empty Cell Test",
+			sheetNames: []string{
+				"Sheet1",
+			},
+			workbookData: [][][]StreamCell{
+				{
+					{NewStyledStringStreamCell("1", StreamStyleUnderlinedString), EmptyStreamCell,
+						NewStyledStringStreamCell("A", StreamStyleBoldString), NewStringStreamCell("B")},
+					{EmptyStreamCell, EmptyStreamCell, EmptyStreamCell, EmptyStreamCell},
+					{NewStringStreamCell("Test"), EmptyStreamCell, EmptyStreamCell, EmptyStreamCell},
+				},
+			},
+		},
 		{
 			testName: "Hyperlink test",
 			sheetNames: []string{
@@ -316,6 +330,19 @@ func (s *StreamStyleSuite) TestXlsxStreamWriteWithStyle(t *C) {
 					expectedWorkbookDataStrings[j] = append(expectedWorkbookDataStrings[j], []string{})
 					for _, cell := range testCase.workbookData[j][k] {
 						expectedWorkbookDataStrings[j][k] = append(expectedWorkbookDataStrings[j][k], cell.cellData)
+					}
+				}
+				isEmptyRow := true
+				for _, testCell := range expectedWorkbookDataStrings[j][k] {
+					if testCell != "" {
+						isEmptyRow = false
+					}
+				}
+				if isEmptyRow {
+					expectedWorkbookDataStrings[j][k] = nil
+				} else {
+					for expectedWorkbookDataStrings[j][k][len(expectedWorkbookDataStrings[j][k])-1] == "" {
+						expectedWorkbookDataStrings[j][k] = expectedWorkbookDataStrings[j][k][:len(expectedWorkbookDataStrings[j][k])-1]
 					}
 				}
 			}
@@ -887,6 +914,12 @@ func checkForCorrectCellStyles(actualCells [][][]Cell, expectedCells [][][]Strea
 }
 
 func compareCellStyles(cellA Cell, cellB StreamCell) error {
+
+	// Empty cell check
+	if cellA.style == nil && cellB.cellStyle.style == nil {
+		return nil
+	}
+
 	fontA := cellA.style.Font
 	fontB := cellB.cellStyle.style.Font
 
