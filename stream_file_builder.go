@@ -245,7 +245,7 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 
 func (sb *StreamFileBuilder) marshalStyles() (string, error) {
 
-	for streamStyle, _ := range sb.customStreamStyles {
+	for streamStyle := range sb.customStreamStyles {
 		XfId := handleStyleForXLSX(streamStyle.style, streamStyle.xNumFmtId, sb.xlsxFile.styles)
 		sb.styleIdMap[streamStyle] = XfId
 	}

@@ -291,7 +291,6 @@ func (sf *StreamFile) NextSheet() error {
 		}
 		sheetIndex = sf.currentSheet.index
 
-		// TODO write relations file
 		err = sf.writeCurrentSheetRelations(xlsxRels)
 		if err != nil {
 			return err
@@ -321,13 +320,17 @@ func (sf *StreamFile) NextSheet() error {
 }
 
 func (sf *StreamFile) writeCurrentSheetRelations(xlsxRels *xlsxWorksheetRels) error {
-	// TODO marshall relations file
+	// marshall relations file
 	marshalledRels, err := xml.Marshal(xlsxRels)
 	if err != nil {
 		sf.err = err
 		return err
 	}
-	// TODO create writer
+
+	// Don't create a relations file if there are no relations
+	if marshalledRels == nil {return nil}
+
+	// create writer
 	sheetPath := "xl/worksheets/_rels/sheet" + strconv.Itoa(sf.currentSheet.index) + sheetFilePathSuffix + ".rels"
 	fileWriter, err := sf.zipWriter.Create(sheetPath)
 	if err != nil {
@@ -335,13 +338,13 @@ func (sf *StreamFile) writeCurrentSheetRelations(xlsxRels *xlsxWorksheetRels) er
 		return err
 	}
 
-	// TODO write begin of file
+	// write begin of file
 	if _, err := fileWriter.Write([]byte(`<?xml version="1.0" encoding="UTF-8"?>`)); err != nil {
 		sf.err = err
 		return err
 	}
 
-	// TODO write relations data
+	// write relations data
 	if _, err := fileWriter.Write(marshalledRels); err != nil {
 		sf.err = err
 		return err
@@ -371,7 +374,7 @@ func (sf *StreamFile) Close() error {
 			return err
 		}
 
-		// TODO write relations file
+		// write relations file
 		err = sf.writeCurrentSheetRelations(xlsxRels)
 		if err != nil {
 			return err
@@ -453,10 +456,10 @@ func (sf *StreamFile) writeSheetEnd() (*xlsxWorksheetRels, error) {
 	if err := sf.currentSheet.write(endSheetDataTag); err != nil {
 		return &xlsxWorksheetRels{}, err
 	}
-	// TODO create relations file
+	// create relations file
 	xlsxRels := sf.currentSheet.makeXLSXSheetRelations()
 	if xlsxRels != nil {
-		// TODO write hyperlinks to sheet
+		// write hyperlinks to sheet
 		err := sf.currentSheet.writeHyperlinks()
 		if err != nil {
 			sf.err = err
