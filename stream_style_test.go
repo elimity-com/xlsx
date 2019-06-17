@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	StyleStreamTestsShouldMakeRealFiles = false
+	StyleStreamTestsShouldMakeRealFiles = true
 )
 
 type StreamStyleSuite struct{}
@@ -374,7 +374,7 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 
 	defaultStyles := []StreamStyle{StreamStyleDefaultString, StreamStyleBoldString, StreamStyleItalicString, StreamStyleUnderlinedString,
 		StreamStyleDefaultInteger, StreamStyleBoldInteger, StreamStyleItalicInteger, StreamStyleUnderlinedInteger,
-		StreamStyleDefaultDate, StreamStyleHyperlink}
+		StreamStyleDefaultDate, StreamStyleDefaultDateTime, StreamStyleHyperlink}
 	allStylesToBeAdded := append(defaultStyles, customStyles...)
 	err = file.AddStreamStyleList(allStylesToBeAdded)
 	if err != nil {
