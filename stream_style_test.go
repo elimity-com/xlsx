@@ -783,26 +783,7 @@ func (s *StreamStyleSuite) TestNoStylesWriteSError(t *C) {
 
 }
 
-func BenchmarkHyperlinks_4(b *testing.B) {
-	sheetNames := []string{"Sheet1"}
-	workbookData := [][][]StreamCell{
-		{
-			{NewHyperlinkStreamCell("https://www.google.be", "", "")},
-			{NewHyperlinkStreamCell("https://www.google.be", "", "")},
-			{NewHyperlinkStreamCell("https://www.google.be", "", "")},
-			{NewHyperlinkStreamCell("https://www.google.be", "", "")},
-		},
-	}
-
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_ = writeStreamFileWithStyle("", ioutil.Discard, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
-	}
-
-}
-
-func benchmarkHyperlinks(b *testing.B, size int){
+func benchmarkHyperlinks(b *testing.B, size int) {
 	sheetNames := []string{"Sheet1"}
 	workbookData := makeRandomHyperlinkData(size)
 
@@ -811,6 +792,10 @@ func benchmarkHyperlinks(b *testing.B, size int){
 	for i := 0; i < b.N; i++ {
 		_ = writeStreamFileWithStyle("", ioutil.Discard, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
 	}
+}
+
+func BenchmarkHyperlinks_4(b *testing.B) {
+	benchmarkHyperlinks(b, 4)
 }
 
 func BenchmarkHyperlinks_100(b *testing.B) {
@@ -830,27 +815,6 @@ func BenchmarkHyperlinks_100000(b *testing.B) {
 	benchmarkHyperlinks(b, 100000)
 }
 
-func (s *StreamStyleSuite) TestHyperlinks_100000(t *C) {
-	sheetNames := []string{"Sheet1"}
-	workbookData := makeRandomHyperlinkData(100000)
-
-	for i := 0; i < 1; i++ {
-		_ = writeStreamFileWithStyle("", ioutil.Discard, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
-	}
-}
-
-//func makeReplicatedHyperlinkData(amount int) [][][]StreamCell {
-//	workbookData := [][][]StreamCell{}
-//	workbookData = append(workbookData, [][]StreamCell{})
-//	workbookData[0] = append(workbookData[0], []StreamCell{})
-//
-//	for i := 0; i < amount; i++ {
-//		workbookData[0][0] = append(workbookData[0][0], NewHyperlinkStreamCell("https://www.google.be", "", ""))
-//	}
-//
-//	return workbookData
-//}
-
 func makeRandomHyperlinkData(amount int) [][][]StreamCell {
 	workbookData := [][][]StreamCell{}
 	workbookData = append(workbookData, [][]StreamCell{})
@@ -858,121 +822,55 @@ func makeRandomHyperlinkData(amount int) [][][]StreamCell {
 
 	for i := 0; i < amount; i++ {
 		link := `https://www.link_nr_` + strconv.Itoa(i) + `.com`
-		workbookData[0][0] = append(workbookData[0][0], NewHyperlinkStreamCell(link, "",""))
+		workbookData[0][0] = append(workbookData[0][0], NewHyperlinkStreamCell(link, "", ""))
 	}
 
 	return workbookData
 }
 
-//func makeRandomWOrkbookData(amount int) [][][]StreamCell {
-//	workbookData := [][][]StreamCell{}
-//	workbookData = append(workbookData, [][]StreamCell{})
-//	workbookData[0] = append(workbookData[0], []StreamCell{})
-//
-//	for i := 0; i < amount; i++ {
-//		text := `strconv.Itoa(i)`
-//		workbookData[0][0] = append(workbookData[0][0], NewStringStreamCell(text))
-//	}
-//
-//	return workbookData
-//}
-//
-//func BenchmarkHyperlinks_4(b *testing.B) {
-//	var filePath string
-//	var buffer bytes.Buffer
-//	if StyleStreamTestsShouldMakeRealFiles {
-//		filePath = fmt.Sprintf("Workbook_newStyle.xlsx")
-//	}
-//
-//	sheetNames := []string{"Sheet1"}
-//	workbookData := [][][]StreamCell{
-//		{
-//			{NewStringStreamCell("https://www.google.be")},
-//			{NewStringStreamCell("https://www.google.be")},
-//			{NewStringStreamCell("https://www.google.be")},
-//			{NewStringStreamCell("https://www.google.be")},
-//		},
-//	}
-//
-//	b.ResetTimer()
-//
-//	for i := 0; i < b.N; i++ {
-//		_ = writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
-//	}
-//
-//}
-//
-//func BenchmarkStreamStyle_100(b *testing.B) {
-//	var filePath string
-//	var buffer bytes.Buffer
-//	if StyleStreamTestsShouldMakeRealFiles {
-//		filePath = fmt.Sprintf("Workbook_newStyle.xlsx")
-//	}
-//
-//	sheetNames := []string{"Sheet1"}
-//	workbookData := makeRandomWOrkbookData(100)
-//
-//	b.ResetTimer()
-//
-//	for i := 0; i < b.N; i++ {
-//		_ = writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
-//	}
-//
-//}
-//
-//func BenchmarkStreamStyle_1000(b *testing.B) {
-//	var filePath string
-//	var buffer bytes.Buffer
-//	if StyleStreamTestsShouldMakeRealFiles {
-//		filePath = fmt.Sprintf("Workbook_newStyle.xlsx")
-//	}
-//
-//	sheetNames := []string{"Sheet1"}
-//	workbookData := makeRandomWOrkbookData(1000)
-//
-//	b.ResetTimer()
-//
-//	for i := 0; i < b.N; i++ {
-//		_ = writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
-//	}
-//
-//}
-//
-//func BenchmarkStreamStyle_10000(b *testing.B) {
-//	var filePath string
-//	var buffer bytes.Buffer
-//	if StyleStreamTestsShouldMakeRealFiles {
-//		filePath = fmt.Sprintf("Workbook_newStyle.xlsx")
-//	}
-//
-//	sheetNames := []string{"Sheet1"}
-//	workbookData := makeRandomWOrkbookData(10000)
-//
-//	b.ResetTimer()
-//
-//	for i := 0; i < b.N; i++ {
-//		_ = writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
-//	}
-//
-//}
-//
-//func BenchmarkStreamStyle_100000(b *testing.B) {
-//	var filePath string
-//	var buffer bytes.Buffer
-//	if StyleStreamTestsShouldMakeRealFiles {
-//		filePath = fmt.Sprintf("Workbook_newStyle.xlsx")
-//	}
-//
-//	sheetNames := []string{"Sheet1"}
-//	workbookData := makeRandomWOrkbookData(100000)
-//
-//	b.ResetTimer()
-//
-//	for i := 0; i < b.N; i++ {
-//		_ = writeStreamFileWithStyle(filePath, &buffer, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
-//	}
-//
-//}
+func makeRandomWOrkbookData(amount int) [][][]StreamCell {
+	workbookData := [][][]StreamCell{}
+	workbookData = append(workbookData, [][]StreamCell{})
+	workbookData[0] = append(workbookData[0], []StreamCell{})
+
+	for i := 0; i < amount; i++ {
+		text := `strconv.Itoa(i)`
+		workbookData[0][0] = append(workbookData[0][0], NewStringStreamCell(text))
+	}
+
+	return workbookData
+}
+
+func benchmarkStreamStyle(b *testing.B, size int) {
+	sheetNames := []string{"Sheet1"}
+	workbookData := makeRandomWOrkbookData(size)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = writeStreamFileWithStyle("", ioutil.Discard, sheetNames, workbookData, StyleStreamTestsShouldMakeRealFiles, []StreamStyle{})
+	}
+}
+
+func BenchmarkStreamStyle_4(b *testing.B) {
+	benchmarkStreamStyle(b, 4)
+}
+
+func BenchmarkStreamStyle_100(b *testing.B) {
+	benchmarkStreamStyle(b, 100)
+}
+
+func BenchmarkStreamStyle_1000(b *testing.B) {
+	benchmarkStreamStyle(b, 1000)
+}
+
+func BenchmarkStreamStyle_10000(b *testing.B) {
+	benchmarkStreamStyle(b, 10000)
+}
+
+func BenchmarkStreamStyle_100000(b *testing.B) {
+	benchmarkStreamStyle(b, 100000)
+}
 
 func checkForCorrectCellStyles(actualCells [][][]Cell, expectedCells [][][]StreamCell) error {
 	for i, _ := range actualCells {
@@ -1004,4 +902,3 @@ func compareCellStyles(cellA Cell, cellB StreamCell) error {
 
 	return nil
 }
-

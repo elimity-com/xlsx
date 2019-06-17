@@ -334,15 +334,15 @@ type xlsxMergeCells struct {
 }
 
 type xlsxHyperlinks struct {
-	XMLName xml.Name
+	XMLName    xml.Name
 	HyperLinks []xlsxHyperlink `xml:"hyperlink"`
 }
 
 type xlsxHyperlink struct {
-	RelationshipId string   `xml:"id,attr"`
-	Reference      string   `xml:"ref,attr"`
-	DisplayString  string   `xml:"display,attr,omitempty"`
-	Tooltip        string   `xml:"tooltip,attr,omitempty"`
+	RelationshipId string `xml:"id,attr"`
+	Reference      string `xml:"ref,attr"`
+	DisplayString  string `xml:"display,attr,omitempty"`
+	Tooltip        string `xml:"tooltip,attr,omitempty"`
 }
 
 // Return the cartesian extent of a merged cell range from its origin

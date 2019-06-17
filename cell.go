@@ -244,11 +244,11 @@ func (c *Cell) SetHyperlink(hyperlink string, displayText string, tooltip string
 	c.Hyperlink = Hyperlink{Link: hyperlink}
 	c.SetString(hyperlink)
 	c.Row.Sheet.addRelation(RelationshipTypeHyperlink, hyperlink, RelationshipTargetModeExternal)
-	if displayText != ""{
+	if displayText != "" {
 		c.Hyperlink.DisplayString = displayText
 		c.SetString(displayText)
 	}
-	if tooltip != ""{
+	if tooltip != "" {
 		c.Hyperlink.Tooltip = tooltip
 	}
 }

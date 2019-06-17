@@ -39,7 +39,6 @@ type streamHyperlink struct {
 	cellID    string
 }
 
-
 func (ss *streamSheet) addStreamHyperlinkRelation(target string) {
 	if ss.HyperlinkRelationMap == nil {
 		ss.HyperlinkRelationMap = make(map[string]int)
@@ -328,7 +327,9 @@ func (sf *StreamFile) writeCurrentSheetRelations(xlsxRels *xlsxWorksheetRels) er
 	}
 
 	// Don't create a relations file if there are no relations
-	if marshalledRels == nil {return nil}
+	if marshalledRels == nil {
+		return nil
+	}
 
 	// create writer
 	sheetPath := "xl/worksheets/_rels/sheet" + strconv.Itoa(sf.currentSheet.index) + sheetFilePathSuffix + ".rels"

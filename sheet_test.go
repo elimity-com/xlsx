@@ -113,7 +113,7 @@ func (s *SheetSuite) TestMakeXLSXSheetFromRows(c *C) {
 	cell.Value = "A cell!"
 	refTable := NewSharedStringRefTable()
 	styles := newXlsxStyleSheet(nil)
-	xSheet, _ := sheet.makeXLSXSheet(refTable, styles,nil)
+	xSheet, _ := sheet.makeXLSXSheet(refTable, styles, nil)
 	c.Assert(xSheet.Dimension.Ref, Equals, "A1")
 	c.Assert(xSheet.SheetData.Row, HasLen, 1)
 	xRow := xSheet.SheetData.Row[0]

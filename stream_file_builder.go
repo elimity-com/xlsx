@@ -205,12 +205,12 @@ func (sb *StreamFileBuilder) Build() (*StreamFile, error) {
 	}
 
 	es := &StreamFile{
-		zipWriter:          sb.zipWriter,
-		xlsxFile:           sb.xlsxFile,
-		sheetXmlPrefix:     make([]string, len(sb.xlsxFile.Sheets)),
-		sheetXmlSuffix:     make([]string, len(sb.xlsxFile.Sheets)),
-		styleIds:           sb.styleIds,
-		styleIdMap:         sb.styleIdMap,
+		zipWriter:      sb.zipWriter,
+		xlsxFile:       sb.xlsxFile,
+		sheetXmlPrefix: make([]string, len(sb.xlsxFile.Sheets)),
+		sheetXmlSuffix: make([]string, len(sb.xlsxFile.Sheets)),
+		styleIds:       sb.styleIds,
+		styleIdMap:     sb.styleIdMap,
 	}
 	for path, data := range parts {
 		// If the part is a sheet, don't write it yet. We only want to write the XLSX metadata files, since at this
