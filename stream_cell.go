@@ -109,9 +109,17 @@ func NewDateStreamCell(t time.Time) StreamCell {
 
 func NewDateTimeStreamCell(t time.Time) StreamCell {
 	// TODO The result lags by two hours: 15:00 becomes 13:00 etc...
-	excelTime := TimeToExcelTime(t, false)
+
+	_, offset := t.Zone()
+	newT := t.Add(time.Duration(offset)*time.Second)
+
+	excelTime := TimeToExcelTime(newT, false)
 	// hack to get the right time
-	excelTime = excelTime + (1.0/12.0)
+
+
+	//timeDiff := float64(offset)/60/60/24
+	//excelTime = excelTime + float64(timeDiff)/24.0
+
 	excelTimeString := strconv.FormatFloat(excelTime, 'f', -1, 64)
 	return NewStreamCell(excelTimeString, StreamStyleDefaultDateTime, CellTypeNumeric)
 }
