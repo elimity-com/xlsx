@@ -4,3 +4,4 @@ xlsx.test
 *.swp
 coverage.txt
 .idea
+stream_test/stream_server.go
