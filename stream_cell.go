@@ -25,6 +25,22 @@ func NewStreamCell(cellData string, cellStyle StreamStyle, cellType CellType) St
 	}
 }
 
+// NewBooleanStreamCell creates a new cell containing the given boolean value.
+func NewBooleanStreamCell(boolean bool) StreamCell{
+	return NewStyledBooleanStreamCell(boolean, StreamStyleDefaultString)
+}
+
+// NewStyledBooleanStreamCell creates a new cell containing the given boolean value, and that has the given style.
+func NewStyledBooleanStreamCell(boolean bool, style StreamStyle) StreamCell{
+	var cellValue string
+	if boolean {
+		cellValue = "1"
+	} else {
+		cellValue = "0"
+	}
+	return NewStreamCell(cellValue, style, CellTypeBool)
+}
+
 // NewHyperlinkStreamCell creates a new cell containing the given hyperlink, displayData and tooltip.
 // DisplayData and tooltip are not necessary. If an empty string is passed then they won't be set.
 // You need to pas a valid URL starting with "http://" or "https://" for excel to recognize it

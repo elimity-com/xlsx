@@ -600,9 +600,11 @@ func (s *StreamSuite) TestNewTypes(t *C) {
 	sheetNames := []string{"Sheet1"}
 	workbookData := [][][]StreamCell{
 		{
-			{NewStreamCell("1", StreamStyleDefaultString, CellTypeBool),
+			{
+				NewBooleanStreamCell(true),
+				NewStyledBooleanStreamCell(true, StreamStyleHyperlink),
 				NewStreamCell("InLine", StreamStyleBoldString, CellTypeInline),
-				NewStreamCell("Error", StreamStyleDefaultString, CellTypeError)},
+			},
 		},
 	}
 
