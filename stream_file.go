@@ -168,9 +168,10 @@ func (sf *StreamFile) writeS(cells []StreamCell) error {
 	if sf.currentSheet == nil {
 		return NoCurrentSheetError
 	}
-	if len(cells) != sf.currentSheet.columnCount {
-		return WrongNumberOfRowsError
-	}
+	// TODO test
+	//if len(cells) != sf.currentSheet.columnCount {
+	//	return WrongNumberOfRowsError
+	//}
 
 	sf.currentSheet.rowCount++
 	// Write the row opening
@@ -250,9 +251,9 @@ func makeXlsxCell(cellType CellType, cellCoordinate string, cellStyleId int, cel
 	case CellTypeNumeric:
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "n", V: cellData}, nil
 	case CellTypeString:
-		// TODO Currently shared strings are types as inline strings
+		// Currently shared strings are types as inline strings
 		return xlsxC{XMLName: xml.Name{Local: "c"}, R: cellCoordinate, S: cellStyleId, T: "inlineStr", Is: &xlsxSI{T: cellData}}, nil
-	// TODO currently not supported
+	// currently not supported
 	// case CellTypeStringFormula:
 	// return xlsxC{}, UnsupportedCellTypeError
 	default:

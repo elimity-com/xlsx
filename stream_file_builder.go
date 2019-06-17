@@ -15,7 +15,7 @@
 // 1. Create a StreamFileBuilder with NewStreamFileBuilder() or NewStreamFileBuilderForPath().
 // 2. Use MakeStyle() to create the styles you want yo use in your document. Keep a list of these styles.
 // 3. Add all the styles you created by using AddStreamStyle() or AddStreamStyleList().
-// 4. Add the sheets and their column styles of data by calling AddSheetS().
+// 4. Add the sheets by calling AddSheetS().
 // 5. Call Build() to get a StreamFile. Once built, all functions on the builder will return an error.
 // 6. Write to the StreamFile with WriteS(). Writes begin on the first sheet. New rows are always written and flushed
 // to the io. All rows written to the same sheet must have the same number of cells as the number of column styles
@@ -156,7 +156,7 @@ func (sb *StreamFileBuilder) addSheet(name string, headers []string, cellTypes [
 // columnStyles[0] becomes the style of the first column, columnStyles[1] the style of the second column etc.
 // All the styles in columnStyles have to have been added or an error will be returned.
 // Sheet names must be unique, or an error will be returned.
-func (sb *StreamFileBuilder) AddSheetS(name string, columnStyles []StreamStyle) error {
+func (sb *StreamFileBuilder) AddSheetS(name string) error {
 	if sb.built {
 		return BuiltStreamFileBuilderError
 	}
@@ -172,25 +172,9 @@ func (sb *StreamFileBuilder) AddSheetS(name string, columnStyles []StreamStyle) 
 	// To make sure no new styles can be added after adding a sheet
 	sb.firstSheetAdded = true
 
-	// Check if all styles that will be used for columns have been created
-	for _, colStyle := range columnStyles {
-		if _, ok := sb.customStreamStyles[colStyle]; !ok {
-			return errors.New("trying to make use of a style that has not been added")
-		}
-	}
-
 	// Is needed for stream file to work but is not needed for streaming with styles
 	sb.styleIds = append(sb.styleIds, []int{})
 
-	sheet.maybeAddCol(len(columnStyles))
-
-	// Set default column styles based on the cel styles in the first row
-	// Set the default column width to 11. This makes enough places for the
-	// default date style cells to display the dates correctly
-	for i, colStyle := range columnStyles {
-		sheet.Cols[i].SetStreamStyle(colStyle)
-		sheet.Cols[i].Width = 11
-	}
 	return nil
 }
 

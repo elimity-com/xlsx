@@ -339,7 +339,12 @@ func (s *Sheet) makeXLSXSheet(refTable *RefTable, styles *xlsxStyleSheet, relati
 			maxLevelRow = row.OutlineLevel
 		}
 		for c, cell := range row.Cells {
-			XfId := colsXfIdList[c]
+			// TODO Test
+			//XfId := colsXfIdList[c]
+			XfId := 0
+			if colsXfIdList != nil {
+				XfId = colsXfIdList[c]
+			}
 
 			// generate NumFmtId and add new NumFmt
 			xNumFmt := styles.newNumFmt(cell.NumFmt)

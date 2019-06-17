@@ -29,6 +29,7 @@ var (
 	StreamStyleUnderlinedInteger StreamStyle
 
 	StreamStyleDefaultDate StreamStyle
+	StreamStyleDefaultDateTime StreamStyle
 
 	StreamStyleDefaultDecimal StreamStyle
 
@@ -79,6 +80,7 @@ func init() {
 	StreamStyleUnderlinedInteger = MakeIntegerStyle(FontUnderlined, DefaultFill(), DefaultAlignment(), DefaultBorder())
 
 	StreamStyleDefaultDate = MakeDateStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
+	StreamStyleDefaultDateTime = MakeDateTimeStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
 
 	StreamStyleDefaultDecimal = MakeDecimalStyle(DefaultFont(), DefaultFill(), DefaultAlignment(), DefaultBorder())
 
@@ -130,4 +132,8 @@ func MakeDecimalStyle(font *Font, fill *Fill, alignment *Alignment, border *Bord
 // If used on other data the formatting might be wrong.
 func MakeDateStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle {
 	return MakeStyle(DateFormat_dd_mm_yy, font, fill, alignment, border)
+}
+
+func MakeDateTimeStyle(font *Font, fill *Fill, alignment *Alignment, border *Border) StreamStyle {
+	return MakeStyle(DateTimeFormat_d_m_yy_h_mm, font, fill, alignment, border)
 }

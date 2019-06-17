@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	StyleStreamTestsShouldMakeRealFiles = true
+	StyleStreamTestsShouldMakeRealFiles = false
 )
 
 type StreamStyleSuite struct{}
@@ -211,7 +211,7 @@ func (s *StreamStyleSuite) TestXlsxStreamWriteWithStyle(t *C) {
 						NewStringStreamCell("asdf")},
 				},
 			},
-			expectedError: WrongNumberOfRowsError,
+			//expectedError: WrongNumberOfRowsError,
 		},
 		{
 			testName: "One Sheet, too few columns in row 1",
@@ -227,7 +227,7 @@ func (s *StreamStyleSuite) TestXlsxStreamWriteWithStyle(t *C) {
 						NewIntegerStreamCell(300)},
 				},
 			},
-			expectedError: WrongNumberOfRowsError,
+			//expectedError: WrongNumberOfRowsError,
 		},
 		{
 			testName: "Lots of Sheets, only writes rows to one, only writes headers to one, should not error and should still create a valid file",
@@ -387,7 +387,7 @@ func writeStreamFileWithStyle(filePath string, fileBuffer io.Writer, sheetNames 
 			colStyles = append(colStyles, StreamStyleDefaultString)
 		}
 
-		err := file.AddSheetS(sheetName, colStyles)
+		err := file.AddSheetS(sheetName)
 		if err != nil {
 			return err
 		}
@@ -474,6 +474,7 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 		{
 			{NewStringStreamCell("Date:")},
 			{NewDateStreamCell(time.Now())},
+			{NewDateTimeStreamCell(time.Now())},
 		},
 	}
 
@@ -514,6 +515,8 @@ func (s *StreamStyleSuite) TestDates(t *C) {
 		dayString = "0" + dayString
 	}
 	expectedWorkbookDataStrings[0][1] = append(expectedWorkbookDataStrings[0][1],
+		monthString+"-"+dayString+"-"+strconv.Itoa(year-2000))
+	expectedWorkbookDataStrings[0][2] = append(expectedWorkbookDataStrings[0][2],
 		monthString+"-"+dayString+"-"+strconv.Itoa(year-2000))
 
 	if !reflect.DeepEqual(actualWorkbookData, expectedWorkbookDataStrings) {
@@ -679,11 +682,11 @@ func (s *StreamStyleSuite) TestCloseWithNothingWrittenToSheetsWithStyle(t *C) {
 		colStyles1 = append(colStyles1, StreamStyleDefaultString)
 	}
 
-	err = file.AddSheetS(sheetNames[0], colStyles0)
+	err = file.AddSheetS(sheetNames[0])
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetS(sheetNames[1], colStyles1)
+	err = file.AddSheetS(sheetNames[1])
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -724,11 +727,11 @@ func (s *StreamStyleSuite) TestBuildErrorsAfterBuildWithStyle(t *C) {
 		t.Fatal(err)
 	}
 
-	err = file.AddSheetS("Sheet1", []StreamStyle{StreamStyleDefaultString})
+	err = file.AddSheetS("Sheet1")
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetS("Sheet2", []StreamStyle{StreamStyleDefaultString})
+	err = file.AddSheetS("Sheet2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -754,11 +757,11 @@ func (s *StreamStyleSuite) TestAddSheetSWithErrorsAfterBuild(t *C) {
 		t.Fatal(err)
 	}
 
-	err = file.AddSheetS("Sheet1", []StreamStyle{StreamStyleDefaultString})
+	err = file.AddSheetS("Sheet1")
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetS("Sheet2", []StreamStyle{StreamStyleDefaultString})
+	err = file.AddSheetS("Sheet2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -767,32 +770,32 @@ func (s *StreamStyleSuite) TestAddSheetSWithErrorsAfterBuild(t *C) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = file.AddSheetS("Sheet3", []StreamStyle{StreamStyleDefaultString})
+	err = file.AddSheetS("Sheet3")
 	if err != BuiltStreamFileBuilderError {
 		t.Fatal(err)
 	}
 }
 
-func (s *StreamStyleSuite) TestNoStylesAddSheetSError(t *C) {
-	buffer := bytes.NewBuffer(nil)
-	file := NewStreamFileBuilder(buffer)
-
-	sheetNames := []string{"Sheet1", "Sheet2"}
-	workbookData := [][][]StreamCell{
-		{{NewStringStreamCell("Header1"), NewStringStreamCell("Header2")}},
-		{{NewStyledStringStreamCell("Header3", StreamStyleBoldString), NewStringStreamCell("Header4")}},
-	}
-
-	colStyles0 := []StreamStyle{}
-	for range workbookData[0][0] {
-		colStyles0 = append(colStyles0, StreamStyleDefaultString)
-	}
-
-	err := file.AddSheetS(sheetNames[0], colStyles0)
-	if err.Error() != "trying to make use of a style that has not been added" {
-		t.Fatal("Error differs from expected error.")
-	}
-}
+//func (s *StreamStyleSuite) TestNoStylesAddSheetSError(t *C) {
+//	buffer := bytes.NewBuffer(nil)
+//	file := NewStreamFileBuilder(buffer)
+//
+//	sheetNames := []string{"Sheet1", "Sheet2"}
+//	workbookData := [][][]StreamCell{
+//		{{NewStringStreamCell("Header1"), NewStringStreamCell("Header2")}},
+//		{{NewStyledStringStreamCell("Header3", StreamStyleBoldString), NewStringStreamCell("Header4")}},
+//	}
+//
+//	colStyles0 := []StreamStyle{}
+//	for range workbookData[0][0] {
+//		colStyles0 = append(colStyles0, StreamStyleDefaultString)
+//	}
+//
+//	err := file.AddSheetS(sheetNames[0], colStyles0)
+//	if err.Error() != "trying to make use of a style that has not been added" {
+//		t.Fatal("Error differs from expected error.")
+//	}
+//}
 
 func (s *StreamStyleSuite) TestNoStylesWriteSError(t *C) {
 	buffer := bytes.NewBuffer(nil)

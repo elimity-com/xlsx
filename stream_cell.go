@@ -106,3 +106,9 @@ func NewDateStreamCell(t time.Time) StreamCell {
 	excelTime := TimeToExcelTime(t, false)
 	return NewStreamCell(strconv.Itoa(int(excelTime)), StreamStyleDefaultDate, CellTypeNumeric)
 }
+
+func NewDateTimeStreamCell(t time.Time) StreamCell {
+	// TODO The result lags by two hours: 15:00 becomes 13:00 etc...
+	excelTime := TimeToExcelTime(t, false)
+	return NewStreamCell(strconv.FormatFloat(excelTime, 'f', -1, 64), StreamStyleDefaultDate, CellTypeNumeric)
+}
