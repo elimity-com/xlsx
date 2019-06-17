@@ -428,7 +428,6 @@ func checkForAutoFilterTag(filePath string, fileBuffer io.ReaderAt, size int64, 
 }
 
 func (s *StreamSuite) TestAddAutoFilters(t *C) {
-
 	sheetNames := []string{
 		"Sheet1",
 	}
